@@ -1,10 +1,12 @@
-function check (v: string, n: number) {
+function check (v: string, n: number) : boolean {
+    let r=false
     for (let i = 0; i <= values.length - 1; i++) {
         const item = values.get(i)
-        if (values.get(i).get(0) == v) {
+        if (item.get(0) == v) {
                     // +string >> value; i.e.:parseFloat
-                    if (n > +item.get(1) && n < +item.get(2)) {
+                    if (n >= +item.get(1) && n <= +item.get(2)) {
                         r = true
+                        break
                     }
                 }
     }
@@ -25,25 +27,30 @@ input.onButtonPressed(Button.B, function () {
     basic.showString("E")
 })
 radio.onReceivedValue(function (name, value) {
-    if (log_to_data_streamer) {
-        if (name == "eol") {
-            serial.writeNumber(radio.receivedPacket(RadioPacketProperty.SignalStrength))
-            serial.writeLine("")
+    if (check(name, value)==true) {
+        if (log_to_data_streamer) {
+            if (name == "eol") {
+                serial.writeNumber(radio.receivedPacket(RadioPacketProperty.SignalStrength))
+                serial.writeLine("")
+            } else {
+                serial.writeNumber(value)
+                serial.writeString(",")
+            }
+            led.toggle(4, 2)
         } else {
-            serial.writeNumber(value)
-            serial.writeString(",")
+            if (name == "eol") {
+                serial.writeValue(name, radio.receivedPacket(RadioPacketProperty.SignalStrength))
+            } else {
+                serial.writeValue(name, value)
+            }
+            led.toggle(2, 4)
         }
-        led.toggle(4, 2)
     } else {
-        if (name == "eol") {
-            serial.writeValue(name, radio.receivedPacket(RadioPacketProperty.SignalStrength))
-        } else {
-            serial.writeValue(name, value)
-        }
-        led.toggle(2, 4)
-    }
+        error+=1
+        serial.writeValue("error"+"="+name,value)
+    }   
 })
-let r = false
+let error=0
 let log_to_data_streamer = false
 let values: string[][] = []
 values.push(["t0", "0", "1000000"])
@@ -52,7 +59,7 @@ values.push(["acc_x", "-1024", "1024"])
 values.push(["acc_y", "-1024", "1024"])
 values.push(["acc_z", "-1024", "1024"])
 values.push(["radius", "-3.1415", "3.1415"])
-values.push(["rotations", "-1000", "1000"])
+values.push(["rotation", "-1000", "1000"])
 values.push(["distance", "0", "100000"])
 values.push(["rpm", "0", "100000"])
 values.push(["rpm_min", "0", "1000"])
